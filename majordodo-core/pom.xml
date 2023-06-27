@@ -185,6 +185,6 @@
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jetty.version>9.4.41.v20210516</jetty.version>
+        <jetty.version>9.4.51.v20230217</jetty.version>
     </properties>
 </project>
