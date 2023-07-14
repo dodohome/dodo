@@ -126,7 +126,7 @@
             <!-- needed for ZK server -->
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
-            <version>1.1.7.6</version>
+            <version>1.1.10.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
