@@ -33,7 +33,7 @@ import majordodo.task.BrokerStatusSnapshot;
 import majordodo.task.LogSequenceNumber;
 import majordodo.task.StatusEdit;
 import majordodo.task.Task;
-import org.apache.bookkeeper.client.BookKeeper;
+import org.apache.bookkeeper.client.api.DigestType;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,6 +53,18 @@ public class ReplicatedCommitLogSimpleTest {
     @Rule
     public TemporaryFolder folderZk = new TemporaryFolder();
 
+    private Map<String, byte[]> getCustomMetadata(ReplicatedCommitLog log, long ledgerId) throws Exception {
+        return log
+            .getBookKeeper().newOpenLedgerOp()
+                .withLedgerId(ledgerId)
+                .withDigestType(DigestType.CRC32C)
+                .withPassword(log.getSharedSecret().getBytes(StandardCharsets.UTF_8))
+                .execute()
+            .get()
+            .getLedgerMetadata()
+            .getCustomMetadata();
+    }
+    
     @Test
     public void test() throws Exception {
         try (ZKTestEnv zkServer = new ZKTestEnv(folderZk.getRoot().toPath());) {
@@ -77,10 +89,7 @@ public class ReplicatedCommitLogSimpleTest {
                 LogSequenceNumber logStatusEdit3 = log.logStatusEdit(edit3);
                 LogSequenceNumber logStatusEdit4 = log.logStatusEdit(edit4);
                 
-                Map<String, byte[]> customMeta = log
-                    .getBookKeeper()
-                    .openLedgerNoRecovery(logStatusEdit4.ledgerId, BookKeeper.DigestType.MAC, log.getSharedSecret().getBytes(StandardCharsets.UTF_8))
-                    .getCustomMetadata();
+                Map<String, byte[]> customMeta = getCustomMetadata(log, logStatusEdit4.ledgerId);
 
                 Assert.assertEquals("majordodo", new String(customMeta.get("application"), StandardCharsets.UTF_8));
                 Assert.assertEquals("broker", new String(customMeta.get("component"), StandardCharsets.UTF_8));
@@ -126,10 +135,7 @@ public class ReplicatedCommitLogSimpleTest {
                 StatusEdit edit1 = StatusEdit.ADD_TASK(1, "mytask", "param1", "myuser", 0, 0, 0, null, 0, null, null);
                 long ledgerId = log.logStatusEdit(edit1).ledgerId;
 
-                Map<String, byte[]> customMeta = log
-                    .getBookKeeper()
-                    .openLedgerNoRecovery(ledgerId, BookKeeper.DigestType.MAC, log.getSharedSecret().getBytes(StandardCharsets.UTF_8))
-                    .getCustomMetadata();
+                Map<String, byte[]> customMeta = getCustomMetadata(log, ledgerId);
 
                 Assert.assertEquals("majordodo", new String(customMeta.get("application"), StandardCharsets.UTF_8));
                 Assert.assertEquals("broker", new String(customMeta.get("component"), StandardCharsets.UTF_8));
